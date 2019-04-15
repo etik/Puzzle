@@ -49,6 +49,16 @@ function randStartCase(nbcol, nbrow)
     let y = Math.floor(Math.random() * nbrow) + 1;
     
     let direction2 = Math.floor(Math.random() * 4) + 1;
+    
+    if (x === 1 && direction2 === 4)
+        direction2 = 2;
+    if (x === nbcol && direction2 === 2)
+        direction2 = 4;
+    if (y === 1 && direction2 === 1)
+        direction2 = 3;
+    if (y === nbrow && direction2 === 3)
+        direction2 = 1;
+
     let item = document.getElementById("square_" + (nbcol * (y - 1) + x));
 
     return new Case(x, y, 0, numberToDirection(direction2), item);
@@ -158,7 +168,6 @@ function createPieces(nbpieces)
 // Check if case direction2 is opposite to piece direction1
 function testDirection(p)
 {
-    console.log(p.direction1);
     if (LASTDIREC === getOpposite(p.direction1))
         return 1;
     if (LASTDIREC === getOpposite(p.direction2))
@@ -166,22 +175,67 @@ function testDirection(p)
     return 0;
 }
 
-function testWall(c, p)
+function testWall(p, nbcol, nbrow, test)
 {
-    //if (c.x  )
+    x = MYCASE.x;
+    y = MYCASE.y;
+    dir = MYCASE.direction2;
+
+    let nbcases = p.cases.length;
+    if (test === 1)
+    {
+        for (let i = 0; i < nbcases; i++)
+        {
+            dir = p.cases[i].direction2;
+            if (dir === direction.TOP)
+                y--;
+            if (dir === direction.RIGHT)
+                x++;
+            if (dir === direction.DOWN)
+                y++;
+            if (dir === direction.LEFT)
+                x--;
+            if (x < 1 || x > nbcol || y < 1 || y > nbrow)
+                return false;
+            dir = p.cases[i].direction2;
+        }
+    }
+    if (test === 2)
+    {
+        for (let i = nbcases - 1; i >= 0; i--)
+        {
+            dir = p.cases[i].direction1;
+            if (dir === direction.TOP)
+                y--;
+            if (dir === direction.RIGHT)
+                x++;
+            if (dir === direction.DOWN)
+                y++;
+            if (dir === direction.LEFT)
+                x--;
+            if (x < 1 || x > nbcol || y < 1 || y > nbrow)
+                return false;
+            dir = p.cases[i].direction2;
+        }
+    }
+
+    return true;
 }
 
 function checkWin(c, end)
 {
-    if (Math.abs(c.x - end.x) + Math.abs(c.y - end.y) === 1)
-    {
-        console.log("Goal reached !");
-        if (((c.x - end.x === -1) && (c.direction2 === direction.RIGHT && end.direction2 === direction.LEFT))
-         || ((c.x - end.x === 1) && (c.direction2 === direction.LEFT && end.direction2 === direction.RIGHT))
-         || ((c.y - end.y === -1) && (c.direction2 === direction.DOWN && end.direction2 === direction.TOP))
-         || ((c.y - end.y === 1) && (c.direction2 === direction.TOP && end.direction2 === direction.DOWN)))
-         return true;
-    } 
+    if (c.x === end.x && c.y === end.y && end.direction2 === getOpposite(LASTDIREC))
+        return true;
+
+    //if (Math.abs(c.x - end.x) + Math.abs(c.y - end.y) === 1)
+    //{
+    //    console.log("Goal reached !");
+    //    if (((c.x - end.x === -1) && (LASTDIREC === direction.RIGHT && end.direction2 === direction.LEFT))
+    //     || ((c.x - end.x === 1) && (LASTDIREC === direction.LEFT && end.direction2 === direction.RIGHT))
+    //     || ((c.y - end.y === -1) && (LASTDIREC === direction.DOWN && end.direction2 === direction.TOP))
+    //     || ((c.y - end.y === 1) && (LASTDIREC === direction.TOP && end.direction2 === direction.DOWN)))
+    //     return true;
+    //} 
 }
 
 function mycaseUptade(nbcol, nbrow)
@@ -212,13 +266,9 @@ function mycaseUptade(nbcol, nbrow)
 function possibilityClicked(piecenb, nbcol, nbrow)
 {
     let p = PIECES[piecenb - 1];
-    console.log(p);
-    let test = testDirection(p);    
+    let test = testDirection(p);
 
-    console.log(PIECES);
-    console.log(test);
-
-    if (test !== 0)
+    if (test !== 0 && testWall(p, nbcol, nbrow, test))
     {
         //let newCase = new Case(MYCASE.x,  MYCASE.y, null, null, null);
         let nbcases = p.cases.length;
@@ -240,37 +290,6 @@ function possibilityClicked(piecenb, nbcol, nbrow)
                 mycaseUptade(nbcol, nbrow);
             }
         }
-
-        /*
-        if (test === 2)
-        {
-            newCase.direction1 = PIECES[piecenb].direction2;
-            newCase.direction2 = PIECES[piecenb].direction1;
-        }
-        else
-        {
-            newCase.direction1 = PIECES[piecenb].direction1;
-            newCase.direction2 = PIECES[piecenb].direction2;
-        }
-
-        if (MYCASE.direction2 === direction.TOP)
-            newCase.y--;
-        if (MYCASE.direction2 === direction.RIGHT)
-            newCase.x++;
-        if (MYCASE.direction2 === direction.DOWN)
-            newCase.y++;
-        if (MYCASE.direction2 === direction.LEFT)
-            newCase.x--;
-
-        newCase.item = document.getElementById("square_" + (nbcol * (newCase.y - 1) + newCase.x))
-
-
-        MYCASE = newCase;
-
-        console.log(MYCASE);
-
-        drawLine(MYCASE);
-        */
    
         if (checkWin(MYCASE, GOAL.End))
             alert("YOU WIN !")
@@ -284,9 +303,9 @@ function main(nbcol, nbrow, nbcolpossibility, nbrowpossibility)
     createTab(nbcol, nbrow, nbcolpossibility, nbrowpossibility);
     createStart(nbcol, nbrow);
     //CASES = createCase(nbcolpossibility * nbrowpossibility);
-    // CASES = hardInitCase();
+    PIECES = hardInitPieces();
+    //PIECES = createPieces(nbcolpossibility * nbrowpossibility);
 
-    PIECES = createPieces(nbcolpossibility * nbrowpossibility);
 }
 
 main(10, 8, 4, 3);
